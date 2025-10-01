@@ -5,6 +5,7 @@ import { ReservationsRepository } from './reservations.repository';
 import { PAYMENT_SERVICE, UserDto } from '@app/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { map } from 'rxjs';
+import { Reservation } from './models/reservation.entity';
 
 
 @Injectable()
@@ -14,7 +15,7 @@ export class ReservationsService {
     @Inject(PAYMENT_SERVICE) private readonly paymentsService: ClientProxy,
   ) { }
 
-  create(createReservationDto: CreateReservationDto, { email, _id: userId}: UserDto, ) {
+  create(createReservationDto: CreateReservationDto, { email, id: userId }: UserDto,) {
     return this.paymentsService
       .send('create_charge', {
         ...createReservationDto.charge,
@@ -22,12 +23,13 @@ export class ReservationsService {
       },
       ).pipe(
         map((res) => {
-          return this.reservationRepository.create({
+          const reservation = new Reservation({
             ...createReservationDto,
-            invoiceId: res.id, 
+            invoiceId: res.id,
             timestamp: new Date(),
             userId,
           });
+          return this.reservationRepository.create(reservation);
         })
       )
   }
@@ -36,18 +38,18 @@ export class ReservationsService {
     return this.reservationRepository.find({});
   }
 
-  findOne(_id: string) {
-    return this.reservationRepository.findOne({ _id });
+  findOne(id: number) {
+    return this.reservationRepository.findOne({ id });
   }
 
-  update(_id: string, updateReservationDto: UpdateReservationDto) {
+  update(id: number, updateReservationDto: UpdateReservationDto) {
     return this.reservationRepository.findOneAndUpdate(
-      { _id },
-      { $set: updateReservationDto }, //override exist property
+      { id },
+      updateReservationDto,
     );
   }
 
-  remove(_id: string) {
-    return this.reservationRepository.findOneAndDelete({ _id });
+  remove(id: number) {
+    return this.reservationRepository.findOneAndDelete({ id });
   }
 }
