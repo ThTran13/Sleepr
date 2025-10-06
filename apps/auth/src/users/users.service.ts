@@ -11,12 +11,23 @@ export class UsersService {
 
     async create(createUserDto: CreateUserDto) {
         await this.validateCreateUser(createUserDto);
+        console.log('DTO:', createUserDto);
+        console.log('CREATING USER');
+        console.log('ROLE', createUserDto.roles);
+        console.log(createUserDto.roles?.map((roleDto) => new Role(roleDto)), "----------------")
         const user = new User({
-             ...createUserDto,
+            ...createUserDto,
             password: await bcrypt.hash(createUserDto.password, 10),
             roles: createUserDto.roles?.map((roleDto) => new Role(roleDto)),
-        })
-        return this.userRepository.create(user);
+        });
+        console.log(user);
+        console.log('User:', user);
+        //return this.userRepository.create(user);
+
+        const savedUser = await this.userRepository.create(user);
+        console.log('Saved user:', savedUser);
+
+        return savedUser;
     }
 
     private async validateCreateUser(createUserDto: CreateUserDto) {
